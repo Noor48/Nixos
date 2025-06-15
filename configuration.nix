@@ -20,6 +20,27 @@
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  boot.kernel.sysctl = {
+    "kernel.unprivileged_userns_clone" = 1;
+    # Optional: Set limits on user namespaces
+    "user.max_user_namespaces" = 65536;
+  };
+
+  # Optional: If you're using AppImages frequently
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
+  # Optional: Enable container support if needed
+  virtualisation = {
+    containers.enable = true;
+    podman = {
+      enable = true;
+      # Podman also benefits from user namespaces
+    };
+  };
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -138,6 +159,8 @@
   };
 
 
+
+
   stylix.enable = true;
   # Install firefox.
   programs.firefox.enable = true;
@@ -155,6 +178,10 @@
     kdePackages.sddm-kcm
     keepassxc
     efivar
+    #cat
+    file
+    starship
+    zoxide
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
