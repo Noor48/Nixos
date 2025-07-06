@@ -109,6 +109,7 @@
   };
 
 
+  programs.fish.enable = true;
   nix.settings.experimental-features = ["nix-command" "flakes"];
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
@@ -162,6 +163,8 @@
 
 
   stylix.enable = true;
+
+#   fonts.packages = builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts)
   # Install firefox.
   programs.firefox.enable = true;
 

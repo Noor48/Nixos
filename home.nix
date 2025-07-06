@@ -85,6 +85,39 @@
      #stylix.base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-hard.yaml";
 
 
+
+     stylix.fonts = {
+        serif = {
+          package = pkgs.nerd-fonts.hack;
+          name = "Hack Nerd Fonts";
+        };
+
+#         noto = {
+#           package = pkgs.nerd-fonts.noto;
+#           name = "Noto Nerd Fonts";
+#         };
+
+        sansSerif = {
+          package = pkgs.nerd-fonts.arimo;
+          name = "Amiro Nerd fonts";
+        };
+
+#         monospace = {
+#           package = pkgs.nerd-fonts.mononoki;
+#           name = "Mononoki Nerd Fonts";
+#         };
+
+          monospace = {
+            package = pkgs.nerd-fonts.mononoki;
+            name = "Mononoki Nerd Font";
+          };
+
+
+        emoji = {
+          package = pkgs.noto-fonts-emoji;
+          name = "Noto Color Emoji";
+        };
+      };
     #stylix.fonts = {
     #    serif = {
     #      package = pkgs.nerd-fonts.hack;
@@ -126,6 +159,7 @@
     wezterm = {
         enable = true;
         package = pkgs.wezterm;
+        extraConfig = builtins.readFile /home/nooremf/wezterm-config-master/wezterm.lua;
 
      };
 
@@ -307,8 +341,12 @@
      rio
      #zathura
      fcitx5-openbangla-keyboard
-     
-  ];
+     nerd-fonts.mononoki
+     nerd-fonts.arimo
+     nerd-fonts.hack
+     noto-fonts-emoji
+    ];
+#  ]++ (builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts));;
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
@@ -317,7 +355,7 @@
     # # the Nix store. Activating the configuration will then make '~/.screenrc' a
     # # symlink to the Nix store copy.
     # ".screenrc".source = dotfiles/screenrc;
-
+    #".config/wezterm/wezterm.lua".source = /home/nooremf/wezterm-config-master/wezterm.lua;
     # # You can also set the file content immediately.
     # ".gradle/gradle.properties".text = ''
     #   org.gradle.console=verbose
