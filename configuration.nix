@@ -19,6 +19,7 @@
 
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  #boot.kernelPackages = pkgs.linuxPackages;
 
   boot.kernel.sysctl = {
     "kernel.unprivileged_userns_clone" = 1;
@@ -118,7 +119,7 @@
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
-
+  services.flatpak.enable = true;
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
@@ -171,6 +172,11 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+
+  programs.gpu-screen-recorder = {
+    enable = true;
+    # NVIDIA patch is automatically applied when using Chaotic Nyx
+  };
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [

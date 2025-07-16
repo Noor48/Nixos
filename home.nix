@@ -1,10 +1,11 @@
-{ config, lib,  pkgs, ... }:
+{ config, lib,  pkgs, flake-inputs, nix-flatpak, ... }:
 
 {
 
   imports = [
    # <catppuccin/modules/home-manager>
    #./themes.nix
+   flake-inputs.nix-flatpak.homeManagerModules.nix-flatpak
    ];
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
@@ -21,6 +22,50 @@
   # release notes.
   home.stateVersion = "24.11"; # Please read the comment before changing.
 
+  services.flatpak = {
+    enable = true;
+
+    # Optionally, specify which remotes to use. Flathub is added by default.
+    remotes = [
+      {
+        name = "flathub";
+        location = "https://flathub.org/repo/flathub.flatpakrepo";
+      }
+    ];
+
+    # List the Flatpak applications you want to install.
+    packages = [
+      # Example: "org.gnome.Calculator"
+      # Add the application IDs of the Flatpaks you want.
+      #"org.mozilla.firefox"
+      #"com.spotify.Client"
+      #"org.videolan.VLC"
+      "com.github.zocker_160.SyncThingy"
+      # You can also specify the origin if it's not the default (flathub)
+      # { appId = "com.example.App"; origin = "my-custom-remote"; }
+    ];
+
+    # This option will remove any Flatpak applications you've installed manually
+    # that are not listed in the `packages` list above on the next
+    # home-manager switch. This helps keep your setup fully declarative.
+    #uninstallUnmanaged = true;
+
+    # You can also set overrides for Flatpak applications globally or per-application.
+    # For example, to grant an application access to a specific directory:
+    overrides = {
+      # Global overrides for all flatpaks
+      global = {
+        Context.filesystems = [
+          "xdg-config/Kvantum:ro"
+        ];
+      };
+
+      # Per-application overrides
+      #"org.mozilla.firefox" = {
+       # Context.sockets = ["wayland"];
+      #};
+    };
+  };
 
 #   #nixGL.packages = import <nixgl> { inherit pkgs; };
 #   nixGL.packages = nixgl.packages;
@@ -77,6 +122,106 @@
       EDITOR = "hx";
     };
   };
+
+  programs.fish = {
+  enable = true;
+  interactiveShellInit = ''
+    # Source global definitions (Fish equivalent)
+    if test -f /etc/fish/config.fish
+        source /etc/fish/config.fish
+    end
+
+    # User specific environment - Fish handles PATH differently
+    fish_add_path ~/.local/bin
+    fish_add_path ~/bin
+
+    # User specific aliases and functions
+    if test -d ~/.config/fish/conf.d
+        for rc in ~/.config/fish/conf.d/*.fish
+            if test -f $rc
+                source $rc
+            end
+        end
+    end
+
+    # Initialize starship and zoxide
+    starship init fish | source
+    zoxide init fish | source
+  '';
+  shellInit = ''
+    # Shell initialization that runs for all fish instances
+  '';
+  loginShellInit = ''
+    # Login shell initialization
+  '';
+  functions = {
+    # You can define custom functions here if needed
+  };
+  shellAliases = {
+    # Define any aliases here
+  };
+  shellAbbrs = {
+    # Fish abbreviations (like aliases but expand when typed)
+  };
+  plugins = [
+    # Fish plugins can be added here
+  ];
+};
+
+programs.zsh = {
+  enable = true;
+  initContent = ''
+    # Source global definitions
+    if [[ -f /etc/zshrc ]]; then
+        source /etc/zshrc
+    fi
+
+    # User specific environment
+    if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]; then
+        PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+    fi
+    export PATH
+
+    # Uncomment the following line if you don't like systemctl's auto-paging feature:
+    # export SYSTEMD_PAGER=
+
+    # User specific aliases and functions
+    if [[ -d ~/.zshrc.d ]]; then
+        for rc in ~/.zshrc.d/*; do
+            if [[ -f "$rc" ]]; then
+                source "$rc"
+            fi
+        done
+    fi
+    unset rc
+
+    # Initialize starship and zoxide
+    eval "$(starship init zsh)"
+    eval "$(zoxide init zsh)"
+  '';
+  shellAliases = {
+    # Define any aliases here
+  };
+  history = {
+    size = 10000;
+    path = "$HOME/.zsh_history";
+    ignoreDups = true;
+    share = true;
+  };
+  autosuggestion = {
+    enable = true;
+  };
+  syntaxHighlighting = {
+    enable = true;
+  };
+  oh-my-zsh = {
+    # enable = true;
+    # plugins = [ "git" "sudo" ];
+    # theme = "robbyrussell";
+  };
+};
+
+
 
 
      #stylix.enable = true;
@@ -295,7 +440,6 @@
   };*/
 
 
-
   #catppuccin.flavor = "mocha";
   #catppuccin.enable = true;
   # The home.packages option allows you to install Nix packages into your
@@ -345,6 +489,7 @@
      nerd-fonts.arimo
      nerd-fonts.hack
      noto-fonts-emoji
+     localsend
     ];
 #  ]++ (builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts));;
 

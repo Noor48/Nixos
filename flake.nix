@@ -53,9 +53,11 @@
       url = "github:nix-community/lanzaboote";  # Remove the version pin
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
   };
 
-  outputs = { self, nixpkgs, home-manager, system-manager, catppuccin, nixgl, stylix, nix-system-graphics, chaotic, nur, nixos-hardware, lanzaboote,  ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, system-manager, catppuccin, nixgl, stylix, nix-system-graphics, chaotic, nur, nixos-hardware, lanzaboote, nix-flatpak,  ... }@inputs:
     let
       system = "x86_64-linux";
       hostname = "nixos";
@@ -99,13 +101,18 @@
           # Main system configuration
           ./configuration.nix
 
+          nix-flatpak.nixosModules.nix-flatpak
+
           # Home Manager integration
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.${username} = import ./home.nix;
-            home-manager.extraSpecialArgs = specialArgs;
+            home-manager.extraSpecialArgs = {
+            inherit specialArgs;
+            flake-inputs = inputs;
+          };
           }
 
           # Catppuccin theme
