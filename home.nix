@@ -6,6 +6,8 @@
    # <catppuccin/modules/home-manager>
    #./themes.nix
    flake-inputs.nix-flatpak.homeManagerModules.nix-flatpak
+   #inputs.zen-browser.homeModules.beta
+   flake-inputs.zen-browser.homeModules.beta
    ];
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
@@ -24,6 +26,10 @@
 
   services.flatpak = {
     enable = true;
+    update.onActivation = true;
+
+    # Automatically remove unused Flatpak packages
+    uninstallUnmanaged = true;
 
     # Optionally, specify which remotes to use. Flathub is added by default.
     remotes = [
@@ -76,6 +82,10 @@
 #   #nixGL.installScripts = [ "mesa" "nvidiaPrime" ];
 #   nixGL.installScripts = [ "nvidia" ];
 #   #nixGL.installScripts = ["mesa"];
+
+
+  programs.zen-browser.enable = true;
+  #programs.zen-browser.nativeMessagingHosts = [pkgs.firefoxpwa];
 
   programs.git = {
     enable = true;
@@ -308,10 +318,10 @@ programs.zsh = {
 
      };
 
-    ghostty = {
-      enable = true;
-      package = pkgs.ghostty;
-    };
+#     ghostty = {
+#       enable = true;
+#       package = pkgs.ghostty;
+#     };
 
     kitty = {
       enable = true;

@@ -3,9 +3,7 @@
 
   inputs = {
     # Core inputs
-#     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-
 
     # Home Manager
     home-manager = {
@@ -44,20 +42,25 @@
     };
 
     # Additional package sets
-    #chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     chaotic.url = "https://flakehub.com/f/chaotic-cx/nyx/*.tar.gz";
 
     # Hardware configuration (optional)
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     lanzaboote = {
-      url = "github:nix-community/lanzaboote";  # Remove the version pin
+      url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Flatpak integration
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, system-manager, catppuccin, nixgl, stylix, nix-system-graphics, chaotic, nur, nixos-hardware, lanzaboote, nix-flatpak,  ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, system-manager, catppuccin, nixgl, stylix, nix-system-graphics, chaotic, nur, nixos-hardware, lanzaboote, nix-flatpak, zen-browser, ... }@inputs:
     let
       system = "x86_64-linux";
       hostname = "nixos";
@@ -65,9 +68,7 @@
 
       # Define overlays including NUR and nixGL
       overlays = [
-        #nixgl.overlay
         nur.overlays.default
-        # Add custom overlays here if needed
         (final: prev: {
           # Custom package overrides can go here
         })
@@ -85,8 +86,8 @@
       # Common special args passed to all configurations
       specialArgs = {
         inherit inputs system hostname username;
-        #inherit nixgl nur;
         inherit nur;
+        flake-inputs = inputs;  # Add this for home.nix compatibility
       };
 
     in {
@@ -95,12 +96,20 @@
         inherit system;
         specialArgs = specialArgs;
         modules = [
-          # Hardware configuration (you'll need to create this)
+          # Hardware configuration
           ./hardware-configuration.nix
 
           # Main system configuration
           ./configuration.nix
 
+          # Enable Flatpak system-wide
+          {
+            services.flatpak.enable = true;
+            xdg.portal.enable = true;
+            xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+          }
+
+          # nix-flatpak module
           nix-flatpak.nixosModules.nix-flatpak
 
           # Home Manager integration
@@ -109,10 +118,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.${username} = import ./home.nix;
-            home-manager.extraSpecialArgs = {
-            inherit specialArgs;
-            flake-inputs = inputs;
-          };
+            home-manager.extraSpecialArgs = specialArgs;
           }
 
           # Catppuccin theme
@@ -124,11 +130,6 @@
           # Chaotic packages
           chaotic.nixosModules.default
 
-          # Hardware support (optional, uncomment if needed)
-          # nixos-hardware.nixosModules.common-pc-ssd
-          # nixos-hardware.nixosModules.common-cpu-intel
-          # nixos-hardware.nixosModules.common-gpu-nvidia
-
           # System-wide overlays
           ({ config, pkgs, ... }: {
             nixpkgs.overlays = overlays;
@@ -137,43 +138,19 @@
 
           lanzaboote.nixosModules.lanzaboote
 
-#           ({ pkgs, lib, ... }: {
-#
-#             environment.systemPackages = [
-#               # For debugging and troubleshooting Secure Boot.
-#               pkgs.sbctl
-#             ];
-#
-#             # Lanzaboote currently replaces the systemd-boot module.
-#             # This setting is usually set to true in configuration.nix
-#             # generated at installation time. So we force it to false
-#             # for now.
-#             boot.loader.systemd-boot.enable = lib.mkForce false;
-#
-#             boot.lanzaboote = {
-#               enable = true;
-#               pkiBundle = "/var/lib/sbctl";
-#             };
-#           })
+          ({ pkgs, lib, ... }: {
+            environment.systemPackages = [
+              pkgs.sbctl
+            ];
 
-            ({ pkgs, lib, ... }: {
-                environment.systemPackages = [
-                  # For debugging and troubleshooting Secure Boot.
-                  pkgs.sbctl
-                ];
+            boot.loader.systemd-boot.enable = lib.mkForce false;
 
-                # Lanzaboote currently replaces the systemd-boot module.
-                # This setting is usually set to true in configuration.nix
-                # generated at installation time. So we force it to false
-                # for now.
-                boot.loader.systemd-boot.enable = lib.mkForce false;
-
-                boot.lanzaboote = {
-                  enable = true;
-                  pkiBundle = "/etc/secureboot";  # Changed from /var/lib/sbctl
-                  configurationLimit = 20;       # Added: Keep 20 generations
-                };
-})
+            boot.lanzaboote = {
+              enable = true;
+              pkiBundle = "/etc/secureboot";
+              configurationLimit = 20;
+            };
+          })
         ];
       };
 
@@ -185,6 +162,7 @@
           catppuccin.homeManagerModules.catppuccin
           stylix.homeManagerModules.stylix
           chaotic.homeManagerModules.default
+          nix-flatpak.homeManagerModules.nix-flatpak  # Add this line
 
           # Enable overlays in Home Manager
           {
@@ -209,59 +187,7 @@
               system-graphics.enable = true;
             };
           })
-
-          # Add your system manager modules here
-          # ./system-manager.nix
         ];
       };
-
-#       # Development shells
-#       devShells.${system}.default = pkgs.mkShell {
-#         buildInputs = with pkgs; [
-#           nixos-rebuild
-#           home-manager
-#           git
-#           vim
-#         ];
-#         shellHook = ''
-#           echo "NixOS development environment loaded!"
-#           echo "Available commands:"
-#           echo "  sudo nixos-rebuild switch --flake .#${hostname}"
-#           echo "  home-manager switch --flake .#${username}"
-#           echo "  system-manager switch --flake .#default"
-#         '';
-#       };
-
-#       # Formatter for nix files
-#       formatter.${system} = pkgs.nixpkgs-fmt;
-#
-#       # Custom packages (if you want to define any)
-#       packages.${system} = {
-#         # Add custom packages here
-#       };
-#
-#       # Apps for easy flake usage
-#       apps.${system} = {
-#         rebuild-system = {
-#           type = "app";
-#           program = toString (pkgs.writeShellScript "rebuild-system" ''
-#             sudo nixos-rebuild switch --flake .#${hostname} "$@"
-#           '');
-#         };
-#
-#         rebuild-home = {
-#           type = "app";
-#           program = toString (pkgs.writeShellScript "rebuild-home" ''
-#             home-manager switch --flake .#${username} "$@"
-#           '');
-#         };
-#
-#         rebuild-system-manager = {
-#           type = "app";
-#           program = toString (pkgs.writeShellScript "rebuild-system-manager" ''
-#             system-manager switch --flake .#default "$@"
-#           '');
-#         };
-#       };
     };
 }
